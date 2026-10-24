@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SlothDesk — Autonomous Local Clutter Janitor</title>
+  <meta name="description" content="Open-source local-first AI janitor that categorizes and renames your chaotic desktop and downloads so you can be completely lazy.">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="header">
+      <div class="brand-group">
+        <div class="mascot-badge" id="mascotBadge" title="Click me to wake the sloth!">
+          <span class="mascot-emoji">🦥</span>
+          <span class="pulse-indicator"></span>
+        </div>
+        <div>
+          <div class="title-row">
+            <h1>SlothDesk</h1>
+            <span class="badge challenge-tag">Slow & Steady Edition</span>
+            <span class="badge privacy-tag">
+              <i data-lucide="shield-check" class="icon-inline"></i> 100% Local Inference
+            </span>
+          </div>
+          <p class="subtitle">The open-source AI janitor that cleans your messy Desktop & Downloads so you don't have to.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://github.com/titas-mahato/slothdesk" target="_blank" class="btn btn-outline" id="ghLink">
+          <i data-lucide="github"></i> GitHub
+        </a>
+      </div>
+    </header>
+
+    <!-- The Lazy Payoff HUD -->
+    <section class="hud-metrics">
+      <div class="metric-card">
+        <div class="metric-icon emerald"><i data-lucide="coffee"></i></div>
+        <div class="metric-body">
+          <span class="metric-label">Laziness Score</span>
+          <span class="metric-value" id="hudLaziness">--%</span>
+          <span class="metric-hint" id="hudHoarding">Idle Sloth</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon blue"><i data-lucide="clock"></i></div>
+        <div class="metric-body">
+          <span class="metric-label">Manual Effort Saved</span>
+          <span class="metric-value" id="hudTimeSaved">-- min</span>
+          <span class="metric-hint">Zero manual dragging or renaming</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon purple"><i data-lucide="hard-drive"></i></div>
+        <div class="metric-body">
+          <span class="metric-label">Cloud Egress Prevented</span>
+          <span class="metric-value" id="hudEgress">0 MB</span>
+          <span class="metric-hint">Zero private files sent to cloud APIs</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon amber"><i data-lucide="cpu"></i></div>
+        <div class="metric-body">
+          <span class="metric-label">Local Engine</span>
+          <span class="metric-value">TF-IDF Vector</span>
+          <span class="metric-hint">Air-gapped &bull; $0.00 / mo</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Toolbar -->
+    <div class="toolbar">
+      <div class="btn-group">
+        <button id="btnMessify" class="btn btn-secondary">
+          <i data-lucide="shuffle"></i> Generate Cluttered Desktop
+        </button>
+        <button id="btnTidy" class="btn btn-primary">
+          <i data-lucide="sparkles"></i> Channel Inner Sloth (One-Click Clean)
+        </button>
+      </div>
+
+      <div class="toolbar-right">
+        <button id="btnOpenUpload" class="btn btn-outline">
+          <i data-lucide="upload-cloud"></i> Drop Your Own File
+        </button>
+        <button id="btnOpenLocalModal" class="btn btn-outline">
+          <i data-lucide="folder-cog"></i> Scan Real Directory
+        </button>
+      </div>
+    </div>
+
+    <!-- Hidden Dropzone Container -->
+    <div class="upload-dropzone hidden" id="uploadDropzone">
+      <div class="dropzone-inner">
+        <i data-lucide="file-up" class="dropzone-icon"></i>
+        <p><strong>Drag & Drop any file here</strong> to analyze locally</p>
+        <p class="dropzone-hint">Invoices, screenshots, code diffs, CSVs, or PDFs &bull; Processed entirely on localhost</p>
+        <input type="file" id="realFileInput" class="hidden-file-input">
+      </div>
+    </div>
+
+    <!-- Main Workspace: Chaotic Canvas vs Smart Drawers -->
+    <main class="workspace-grid">
+      <!-- Left Panel: Chaotic Desktop -->
+      <section class="panel desktop-panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <i data-lucide="layout-grid" class="panel-icon"></i>
+            <h2>Chaotic Desktop & Downloads</h2>
+            <span class="counter-badge" id="chaoticCount">10 items</span>
+          </div>
+          <span class="panel-status-tag" id="desktopStatus">Needs Cleaning</span>
+        </div>
+
+        <div class="desktop-files-grid" id="desktopFilesContainer">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Right Panel: Smart Topic Drawers -->
+      <section class="panel drawers-panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <i data-lucide="archive" class="panel-icon"></i>
+            <h2>Organized Topic Drawers</h2>
+          </div>
+          <span class="panel-status-tag success hidden" id="drawersStatus">100% Tidy</span>
+        </div>
+
+        <div class="drawers-container" id="drawersContainer">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Why Open Innovation Section -->
+    <section class="open-innovation-section">
+      <div class="manifesto-card">
+        <div class="manifesto-badge"><i data-lucide="lock"></i> Why Open Innovation Matters</div>
+        <h3>Why Closed AI Fails at Desktop Tidying</h3>
+        <p>
+          Your `Downloads` and `Desktop` folders hold your most sensitive personal life: tax returns (W-2/1099),
+          banking statements, medical invoices, paystubs, private work screenshots, and code secrets.
+          Sending these files to proprietary cloud LLM APIs poses severe privacy, compliance, and cost risks.
+        </p>
+        <div class="manifesto-grid">
+          <div class="point-item">
+            <strong>1. Zero Data Leakage</strong>
+            <span>All text extraction, vector similarity, and renaming runs 100% locally. Zero bytes ever leave your machine.</span>
+          </div>
+          <div class="point-item">
+            <strong>2. Free Forever ($0.00)</strong>
+            <span>Continuous background daemons polling external APIs rack up huge bills. Open-source inference costs nothing to run 24/7.</span>
+          </div>
+          <div class="point-item">
+            <strong>3. Complete Offline Independence</strong>
+            <span>Clean your laptop clutter on an airplane, off-grid trail, or without Wi-Fi connection.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>
+        <span>Autonomous Clutter Janitor</span> &bull; 
+        <span>Built with <em>Local Open-Source AI</em></span>
+      </div>
+      <div>
+        <span>Open Source AI Janitor &bull; Made with FastAPI & scikit-learn</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Local Folder Scan Modal -->
+  <div class="modal-overlay hidden" id="localModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i data-lucide="folder"></i> Scan Local Folder on Computer</h3>
+        <button class="btn-close" id="btnCloseModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Enter the full path of any folder on your machine (e.g. `C:\Users\You\Downloads` or `~/Downloads`).</p>
+        <div class="input-group">
+          <label for="localFolderPath">Folder Path:</label>
+          <input type="text" id="localFolderPath" placeholder="C:\Users\username\Downloads" class="text-input">
+        </div>
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" id="chkDryRun" checked>
+            <strong>Dry Run (Preview Only)</strong> — Preview the proposed renaming and drawers without moving files.
+          </label>
+        </div>
+        <div id="localScanResult" class="scan-result-box hidden"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btnCancelScan">Cancel</button>
+        <button class="btn btn-primary" id="btnExecuteScan">
+          <i data-lucide="play"></i> Run Local Janitor
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Detail Inspector Modal -->
+  <div class="modal-overlay hidden" id="inspectorModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="inspectFileName">File Inspector</h3>
+        <button class="btn-close" id="btnCloseInspector">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="inspect-field">
+          <span class="inspect-label">Original Name:</span>
+          <code id="inspectOrigName"></code>
+        </div>
+        <div class="inspect-field">
+          <span class="inspect-label">Smart Normalized Name:</span>
+          <code id="inspectProposedName" class="highlight-code"></code>
+        </div>
+        <div class="inspect-field">
+          <span class="inspect-label">Assigned Drawer:</span>
+          <span id="inspectDrawerBadge" class="badge"></span>
+        </div>
+        <div class="inspect-field">
+          <span class="inspect-label">Confidence:</span>
+          <span id="inspectConfidence"></span>
+        </div>
+        <div class="inspect-field">
+          <span class="inspect-label">AI Reasoning:</span>
+          <p id="inspectReason" class="inspect-reason-text"></p>
+        </div>
+        <div class="inspect-field">
+          <span class="inspect-label">Detected Semantic Tokens:</span>
+          <div id="inspectTokens" class="tags-row"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
