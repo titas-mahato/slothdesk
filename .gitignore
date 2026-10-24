@@ -38,6 +38,9 @@ htmlcov/
 docs/
 *.study.md
 *.viva.md
+SUBMISSION.md
+submissions.md
+*.submission.md
 
 # Operating System files
 .DS_Store
